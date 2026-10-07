@@ -1,0 +1,10 @@
+{
+  "name":"WHADALZON",
+  "short_name":"WHADALZON",
+  "description":"La ville numérique qui nous connecte.",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#f5f7fb",
+  "theme_color":"#090e1c",
+  "lang":"fr"
+}
