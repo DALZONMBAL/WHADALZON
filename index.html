@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1877F2">
+  <meta name="description" content="WHADALZON — le réseau social pensé pour Goma.">
+  <title>WHADALZON — Goma</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">W</span><span>WHADALZON</span></a>
+    <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Rechercher sur WHADALZON"></div>
+    <nav class="top-actions" aria-label="Navigation">
+      <button class="icon-btn active" title="Accueil"><i class="fa-solid fa-house"></i></button>
+      <button class="icon-btn" title="Amis"><i class="fa-solid fa-user-group"></i></button>
+      <button class="icon-btn" title="Messages"><i class="fa-solid fa-message"></i></button>
+      <button class="icon-btn" title="Notifications"><i class="fa-solid fa-bell"></i></button>
+      <button class="profile-btn" title="Profil"><span>SM</span></button>
+    </nav>
+  </header>
+
+  <main class="layout">
+    <aside class="sidebar left">
+      <a class="menu-item active"><i class="fa-solid fa-house"></i><span>Accueil</span></a>
+      <a class="menu-item"><i class="fa-solid fa-user-group"></i><span>Amis</span></a>
+      <a class="menu-item"><i class="fa-solid fa-compass"></i><span>Découvrir</span></a>
+      <a class="menu-item"><i class="fa-solid fa-location-dot"></i><span>Goma</span></a>
+      <a class="menu-item"><i class="fa-solid fa-bookmark"></i><span>Enregistrés</span></a>
+      <a class="menu-item"><i class="fa-solid fa-gear"></i><span>Paramètres</span></a>
+      <div class="sidebar-card">
+        <strong>WHADALZON</strong>
+        <p>Un espace pour connecter les personnes, les idées et les communautés de Goma.</p>
+      </div>
+    </aside>
+
+    <section class="feed">
+      <div class="composer card">
+        <div class="composer-top">
+          <div class="avatar">SM</div>
+          <button id="composerButton" class="composer-input">Quoi de neuf à Goma ?</button>
+        </div>
+        <div class="composer-actions">
+          <button><i class="fa-regular fa-image"></i><span>Photo</span></button>
+          <button><i class="fa-solid fa-video"></i><span>Vidéo</span></button>
+          <button><i class="fa-solid fa-location-dot"></i><span>Lieu</span></button>
+        </div>
+      </div>
+
+      <article class="post card">
+        <div class="post-head">
+          <div class="avatar gradient">W</div>
+          <div><strong>WHADALZON</strong><span>Goma · maintenant</span></div>
+          <button class="more"><i class="fa-solid fa-ellipsis"></i></button>
+        </div>
+        <p>Bienvenue sur <strong>WHADALZON</strong>. Un nouveau réseau social construit pour rapprocher Goma et ses communautés.</p>
+        <div class="post-banner"><i class="fa-solid fa-location-dot"></i><div><strong>GOMA</strong><small>Connectons les idées. Partageons les moments.</small></div></div>
+        <div class="post-stats"><span><i class="fa-solid fa-thumbs-up"></i> 0</span><span>0 commentaires</span></div>
+        <div class="post-actions">
+          <button><i class="fa-regular fa-thumbs-up"></i> J’aime</button>
+          <button><i class="fa-regular fa-comment"></i> Commenter</button>
+          <button><i class="fa-solid fa-share"></i> Partager</button>
+        </div>
+      </article>
+    </section>
+
+    <aside class="sidebar right">
+      <div class="card panel">
+        <div class="panel-title"><strong>Contacts</strong><button><i class="fa-solid fa-ellipsis"></i></button></div>
+        <div class="contact"><span class="online">PM</span><strong>Pamela</strong></div>
+        <div class="contact"><span class="online">HE</span><strong>Helene</strong></div>
+        <div class="contact"><span class="offline">GE</span><strong>Glodie</strong></div>
+      </div>
+      <div class="card panel">
+        <div class="panel-title"><strong>À découvrir à Goma</strong></div>
+        <div class="discover"><i class="fa-solid fa-users"></i><div><strong>Communautés</strong><small>Découvrez des personnes et projets locaux.</small></div></div>
+        <div class="discover"><i class="fa-solid fa-bolt"></i><div><strong>Tendances</strong><small>Ce qui fait parler la communauté.</small></div></div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>
