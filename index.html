@@ -1,56 +1,69 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b1020"><meta name="description" content="WHADALZON — la ville numérique qui nous connecte.">
-<title>WHADALZON — La ville numérique</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0a0f1f">
+<meta name="description" content="WHADALZON — la ville numérique qui nous connecte.">
+<title>WHADALZON</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <header class="topbar">
-<a class="brand" href="#"><span class="brand-mark">W</span><span>WHADALZON</span></a>
-<div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Rechercher une personne, un espace..."></div>
-<nav class="top-actions">
-<button class="icon-btn active" data-section="home" title="Accueil"><i class="fa-solid fa-house"></i></button>
-<button class="icon-btn" data-section="discover" title="Découvrir"><i class="fa-solid fa-compass"></i></button>
-<button class="icon-btn" data-section="messages" title="Messages"><i class="fa-solid fa-comments"></i></button>
-<button class="icon-btn" data-section="notifications" title="Notifications"><i class="fa-solid fa-bell"></i></button>
-<button class="profile-btn" title="Mon profil">SM</button>
-</nav>
+  <button class="brand" data-page="home"><span>W</span><b>WHADALZON</b></button>
+  <label class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="search" placeholder="Rechercher dans WHADALZON"></label>
+  <div class="top-actions">
+    <button data-page="notifications" title="Notifications"><i class="fa-regular fa-bell"></i><em>3</em></button>
+    <button data-page="messages" title="Messages"><i class="fa-regular fa-comments"></i></button>
+    <button class="avatar-button" data-page="profile">SM</button>
+  </div>
 </header>
-<main class="layout">
-<aside class="sidebar left">
-<a class="menu-item active" data-section="home"><i class="fa-solid fa-house"></i><span>Ma ville</span></a>
-<a class="menu-item" data-section="spaces"><i class="fa-solid fa-layer-group"></i><span>Espaces</span></a>
-<a class="menu-item" data-section="discover"><i class="fa-solid fa-compass"></i><span>Découvrir</span></a>
-<a class="menu-item" data-section="events"><i class="fa-solid fa-calendar-days"></i><span>Événements</span></a>
-<a class="menu-item" data-section="messages"><i class="fa-solid fa-comments"></i><span>Messages</span></a>
-<a class="menu-item" data-section="channels"><i class="fa-solid fa-bullhorn"></i><span>Canaux</span></a>
-<a class="menu-item" data-section="saved"><i class="fa-solid fa-bookmark"></i><span>Enregistrés</span></a>
-<div class="sidebar-card"><strong>LA VILLE NUMÉRIQUE</strong><p>Des personnes, des communautés, des idées et des activités réunies dans un seul espace.</p></div>
+
+<div class="shell">
+<aside class="sidebar">
+  <div class="account"><div class="avatar">SM</div><div><strong>Mon espace</strong><small>Goma · membre</small></div></div>
+  <nav>
+    <button class="nav active" data-page="home"><i class="fa-solid fa-house"></i>Ma ville</button>
+    <button class="nav" data-page="spaces"><i class="fa-solid fa-layer-group"></i>Espaces</button>
+    <button class="nav" data-page="discover"><i class="fa-solid fa-compass"></i>Découvrir</button>
+    <button class="nav" data-page="events"><i class="fa-regular fa-calendar"></i>Événements</button>
+    <button class="nav" data-page="channels"><i class="fa-solid fa-bullhorn"></i>Canaux</button>
+    <button class="nav" data-page="messages"><i class="fa-regular fa-comments"></i>Messages</button>
+    <button class="nav" data-page="saved"><i class="fa-regular fa-bookmark"></i>Enregistrés</button>
+  </nav>
+  <div class="city-box"><i class="fa-solid fa-location-dot"></i><div><b>GOMA</b><small>Une ville, des communautés, des idées.</small></div></div>
 </aside>
-<section class="feed">
-<div class="hero card"><div><span class="eyebrow">WHADALZON · GOMA</span><h1>Tout ce qui fait vivre ta ville.</h1><p>Découvre des espaces, partage tes idées, rejoins des communautés et reste connecté aux activités qui comptent.</p></div><button class="primary" data-action="create-space"><i class="fa-solid fa-plus"></i> Créer un espace</button></div>
-<div class="quick-grid">
-<button class="quick card" data-section="spaces"><i class="fa-solid fa-layer-group"></i><strong>Espaces</strong><small>Rejoins tes communautés</small></button>
-<button class="quick card" data-section="events"><i class="fa-solid fa-calendar-days"></i><strong>Événements</strong><small>Ce qui se passe à Goma</small></button>
-<button class="quick card" data-section="channels"><i class="fa-solid fa-bullhorn"></i><strong>Canaux</strong><small>Informations publiques</small></button>
-</div>
-<div class="composer card"><div class="composer-top"><div class="avatar">SM</div><button id="composerButton" class="composer-input">Partager quelque chose avec la ville...</button></div><div class="composer-actions"><button data-action="photo"><i class="fa-regular fa-image"></i>Photo</button><button data-action="idea"><i class="fa-regular fa-lightbulb"></i>Idée</button><button data-action="event"><i class="fa-solid fa-calendar-plus"></i>Événement</button></div></div>
-<article class="post card"><div class="post-head"><div class="avatar gradient">W</div><div><strong>WHADALZON</strong><span>Annonce · Goma</span></div><button class="more"><i class="fa-solid fa-ellipsis"></i></button></div><p><strong>Bienvenue dans la ville numérique.</strong><br>Un espace où les communautés de Goma peuvent se retrouver, créer des projets, partager des informations et organiser leurs activités.</p><div class="city-panel"><div class="city-icon"><i class="fa-solid fa-city"></i></div><div><strong>GOMA</strong><span>Personnes · Espaces · Événements · Canaux</span></div><i class="fa-solid fa-arrow-right"></i></div><div class="post-stats"><span><i class="fa-solid fa-users"></i> Ville en mouvement</span><span>WHADALZON</span></div></article>
-<div class="section-title"><div><span class="eyebrow">POUR TOI</span><h2>À découvrir</h2></div><button class="text-btn" data-section="discover">Tout voir</button></div>
-<div class="discover-grid">
-<div class="discover-card card"><i class="fa-solid fa-code"></i><strong>Tech Goma</strong><span>Innovation & numérique</span><button data-action="join">Rejoindre</button></div>
-<div class="discover-card card"><i class="fa-solid fa-graduation-cap"></i><strong>Étudiants & écoles</strong><span>Communauté éducative</span><button data-action="join">Rejoindre</button></div>
-<div class="discover-card card"><i class="fa-solid fa-people-group"></i><strong>Jeunes de Goma</strong><span>Idées & projets</span><button data-action="join">Rejoindre</button></div>
-</div>
-</section>
-<aside class="sidebar right">
-<div class="card panel"><div class="panel-title"><strong>En ce moment</strong><i class="fa-solid fa-bolt"></i></div><div class="trend"><span>01</span><div><strong>Technologie</strong><small>Dans les discussions</small></div></div><div class="trend"><span>02</span><div><strong>Éducation</strong><small>Communauté active</small></div></div><div class="trend"><span>03</span><div><strong>Entrepreneuriat</strong><small>À découvrir</small></div></div></div>
-<div class="card panel"><div class="panel-title"><strong>Prochains événements</strong><i class="fa-regular fa-calendar"></i></div><div class="event"><b>12</b><div><strong>Rencontre Tech</strong><small>Goma · bientôt</small></div></div><div class="event"><b>18</b><div><strong>Forum des jeunes</strong><small>Goma · bientôt</small></div></div></div>
+
+<main id="app"></main>
+
+<aside class="rightbar">
+  <section class="panel"><h3>À la une <i class="fa-solid fa-bolt"></i></h3>
+    <div class="item"><b>01</b><div><strong>Technologie</strong><small>Communauté active</small></div></div>
+    <div class="item"><b>02</b><div><strong>Jeunesse</strong><small>Projets à découvrir</small></div></div>
+    <div class="item"><b>03</b><div><strong>Entrepreneuriat</strong><small>Ça bouge à Goma</small></div></div>
+  </section>
+  <section class="panel"><h3>Événements <i class="fa-regular fa-calendar"></i></h3>
+    <div class="event"><b>12</b><div><strong>Rencontre Tech</strong><small>Goma · bientôt</small></div></div>
+    <div class="event"><b>18</b><div><strong>Forum des jeunes</strong><small>Goma · bientôt</small></div></div>
+  </section>
 </aside>
-</main>
-<div id="toast" class="toast"></div><script src="app.js"></script>
-</body></html>
+</div>
+
+<nav class="mobile-nav">
+<button data-page="home"><i class="fa-solid fa-house"></i>Accueil</button>
+<button data-page="spaces"><i class="fa-solid fa-layer-group"></i>Espaces</button>
+<button data-page="create"><i class="fa-solid fa-plus"></i>Créer</button>
+<button data-page="messages"><i class="fa-regular fa-comments"></i>Messages</button>
+<button data-page="profile"><i class="fa-regular fa-user"></i>Profil</button>
+</nav>
+
+<div class="modal" id="modal"><div class="modal-card"><button class="close" id="close"><i class="fa-solid fa-xmark"></i></button><div id="modalContent"></div></div></div>
+<div id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
