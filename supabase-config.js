@@ -1,0 +1,1 @@
+const SUPABASE_URL="https://ncibosndmdhnwxwbeaeb.supabase.co";const SUPABASE_ANON_KEY="sb_publishable_hWAho0w65v1vGyutsWvPeA_LV51rKWz";const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
