@@ -104,10 +104,7 @@ create index if not exists notifications_user_idx on public.notifications(user_i
 create index if not exists messages_conversation_idx on public.messages(conversation_id,created_at);
 
 create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer
-set search_path = public
+returns trigger language plpgsql security definer set search_path = public
 as $$
 begin
   insert into public.profiles (id, username, full_name)
@@ -122,8 +119,7 @@ end;
 $$;
 
 drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-after insert on auth.users
+create trigger on_auth_user_created after insert on auth.users
 for each row execute procedure public.handle_new_user();
 
 create or replace function public.set_updated_at()
@@ -133,10 +129,8 @@ $$;
 
 drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at before update on public.profiles for each row execute procedure public.set_updated_at();
-
 drop trigger if exists posts_updated_at on public.posts;
 create trigger posts_updated_at before update on public.posts for each row execute procedure public.set_updated_at();
-
 drop trigger if exists comments_updated_at on public.comments;
 create trigger comments_updated_at before update on public.comments for each row execute procedure public.set_updated_at();
 
@@ -201,17 +195,25 @@ drop policy if exists "authenticated create conversations" on public.conversatio
 create policy "authenticated create conversations" on public.conversations for insert with check (auth.uid() is not null);
 
 drop policy if exists "members see membership" on public.conversation_members;
-create policy "members see membership" on public.conversation_members for select using (user_id=auth.uid() or exists(select 1 from public.conversation_members x where x.conversation_id=conversation_id and x.user_id=auth.uid()));
+create policy "members see membership" on public.conversation_members for select using (
+  user_id=auth.uid() or exists(
+    select 1 from public.conversation_members x
+    where x.conversation_id=conversation_members.conversation_id and x.user_id=auth.uid()
+  )
+);
 drop policy if exists "authenticated add membership" on public.conversation_members;
 create policy "authenticated add membership" on public.conversation_members for insert with check (auth.uid() is not null);
 
 drop policy if exists "members see messages" on public.messages;
 create policy "members see messages" on public.messages for select using (
-  exists(select 1 from public.conversation_members cm where cm.conversation_id=conversation_id and cm.user_id=auth.uid())
+  exists(select 1 from public.conversation_members cm where cm.conversation_id=messages.conversation_id and cm.user_id=auth.uid())
 );
 drop policy if exists "members send messages" on public.messages;
 create policy "members send messages" on public.messages for insert with check (
-  auth.uid()=sender_id and exists(select 1 from public.conversation_members cm where cm.conversation_id=conversation_id and cm.user_id=auth.uid())
+  auth.uid()=sender_id and exists(
+    select 1 from public.conversation_members cm
+    where cm.conversation_id=messages.conversation_id and cm.user_id=auth.uid()
+  )
 );
 
 drop policy if exists "users create reports" on public.reports;
@@ -219,7 +221,6 @@ create policy "users create reports" on public.reports for insert with check (au
 drop policy if exists "users see own reports" on public.reports;
 create policy "users see own reports" on public.reports for select using (auth.uid()=reporter_id);
 
--- Storage bucket for social media
 insert into storage.buckets (id,name,public) values ('whadalzon-media','whadalzon-media',true)
 on conflict (id) do nothing;
 
@@ -228,4 +229,6 @@ create policy "public can view whadalzon media" on storage.objects for select us
 drop policy if exists "users upload whadalzon media" on storage.objects;
 create policy "users upload whadalzon media" on storage.objects for insert with check (bucket_id='whadalzon-media' and auth.uid() is not null);
 drop policy if exists "users delete own whadalzon media" on storage.objects;
-create policy "users delete own whadalzon media" on storage.objects for delete using (bucket_id='whadalzon-media' and owner_id=auth.uid());
+create policy "users delete own whadalzon media" on storage.objects for delete using (
+  bucket_id='whadalzon-media' and owner_id=auth.uid()::text
+);
