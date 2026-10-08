@@ -249,3 +249,99 @@ begin
 exception when undefined_object then
   null;
 end $$;
+
+
+-- Ville numérique : espaces, événements, canaux et contenus enregistrés.
+create table if not exists public.spaces (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (length(trim(name)) between 2 and 120),
+  description text not null default '',
+  city text not null default 'Goma',
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.space_members (
+  space_id uuid not null references public.spaces(id) on delete cascade,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  joined_at timestamptz not null default now(),
+  primary key(space_id,user_id)
+);
+
+create table if not exists public.events (
+  id uuid primary key default gen_random_uuid(),
+  title text not null check (length(trim(title)) between 2 and 160),
+  description text not null default '',
+  location text not null default 'Goma',
+  starts_at timestamptz not null,
+  creator_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.channels (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique check (length(trim(name)) between 2 and 80),
+  description text not null default '',
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.saved_posts (
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  post_id uuid not null references public.posts(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  primary key(user_id,post_id)
+);
+
+create index if not exists spaces_created_idx on public.spaces(created_at desc);
+create index if not exists space_members_user_idx on public.space_members(user_id);
+create index if not exists events_start_idx on public.events(starts_at);
+create index if not exists channels_created_idx on public.channels(created_at desc);
+create index if not exists saved_posts_user_idx on public.saved_posts(user_id,created_at desc);
+
+alter table public.spaces enable row level security;
+alter table public.space_members enable row level security;
+alter table public.events enable row level security;
+alter table public.channels enable row level security;
+alter table public.saved_posts enable row level security;
+
+drop policy if exists "spaces are public" on public.spaces;
+create policy "spaces are public" on public.spaces for select using (true);
+drop policy if exists "users create spaces" on public.spaces;
+create policy "users create spaces" on public.spaces for insert with check (auth.uid()=owner_id);
+drop policy if exists "owners update spaces" on public.spaces;
+create policy "owners update spaces" on public.spaces for update using (auth.uid()=owner_id) with check (auth.uid()=owner_id);
+drop policy if exists "owners delete spaces" on public.spaces;
+create policy "owners delete spaces" on public.spaces for delete using (auth.uid()=owner_id);
+
+drop policy if exists "space memberships are visible" on public.space_members;
+create policy "space memberships are visible" on public.space_members for select using (true);
+drop policy if exists "users join spaces" on public.space_members;
+create policy "users join spaces" on public.space_members for insert with check (auth.uid()=user_id);
+drop policy if exists "users leave spaces" on public.space_members;
+create policy "users leave spaces" on public.space_members for delete using (auth.uid()=user_id);
+
+drop policy if exists "events are public" on public.events;
+create policy "events are public" on public.events for select using (true);
+drop policy if exists "users create events" on public.events;
+create policy "users create events" on public.events for insert with check (auth.uid()=creator_id);
+drop policy if exists "creators update events" on public.events;
+create policy "creators update events" on public.events for update using (auth.uid()=creator_id) with check (auth.uid()=creator_id);
+drop policy if exists "creators delete events" on public.events;
+create policy "creators delete events" on public.events for delete using (auth.uid()=creator_id);
+
+drop policy if exists "channels are public" on public.channels;
+create policy "channels are public" on public.channels for select using (true);
+drop policy if exists "users create channels" on public.channels;
+create policy "users create channels" on public.channels for insert with check (auth.uid()=owner_id);
+drop policy if exists "owners update channels" on public.channels;
+create policy "owners update channels" on public.channels for update using (auth.uid()=owner_id) with check (auth.uid()=owner_id);
+drop policy if exists "owners delete channels" on public.channels;
+create policy "owners delete channels" on public.channels for delete using (auth.uid()=owner_id);
+
+drop policy if exists "users see saved posts" on public.saved_posts;
+create policy "users see saved posts" on public.saved_posts for select using (auth.uid()=user_id);
+drop policy if exists "users save posts" on public.saved_posts;
+create policy "users save posts" on public.saved_posts for insert with check (auth.uid()=user_id);
+drop policy if exists "users unsave posts" on public.saved_posts;
+create policy "users unsave posts" on public.saved_posts for delete using (auth.uid()=user_id);
