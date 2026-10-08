@@ -149,6 +149,8 @@ drop policy if exists "profiles are public" on public.profiles;
 create policy "profiles are public" on public.profiles for select using (true);
 drop policy if exists "users update own profile" on public.profiles;
 create policy "users update own profile" on public.profiles for update using (auth.uid()=id) with check (auth.uid()=id);
+drop policy if exists "users insert own profile" on public.profiles;
+create policy "users insert own profile" on public.profiles for insert with check (auth.uid()=id);
 
 drop policy if exists "posts are public" on public.posts;
 create policy "posts are public" on public.posts for select using (true);
