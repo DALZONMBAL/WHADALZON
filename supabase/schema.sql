@@ -234,4 +234,18 @@ drop policy if exists "users delete own whadalzon media" on storage.objects;
 create policy "users delete own whadalzon media" on storage.objects for delete using (
   bucket_id='whadalzon-media' and owner_id=auth.uid()::text
 );
-\n-- Realtime for the chat: add messages only if it is not already published.\ndo $$\nbegin\n  if not exists (select 1 from pg_publication_tables where pubname='supabase_realtime' and schemaname='public' and tablename='messages') then\n    alter publication supabase_realtime add table public.messages;\n  end if;\nexception when undefined_object then\n  null;\nend $$;\n
+-- Realtime for the chat: add messages only if it is not already published.
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname='supabase_realtime'
+      and schemaname='public'
+      and tablename='messages'
+  ) then
+    alter publication supabase_realtime add table public.messages;
+  end if;
+exception when undefined_object then
+  null;
+end $$;
