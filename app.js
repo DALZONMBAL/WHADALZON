@@ -19,16 +19,31 @@ function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt
 function ago(d){const m=Math.max(1,Math.floor((Date.now()-new Date(d).getTime())/60000));return m<60?m+" min":m<1440?Math.floor(m/60)+" h":Math.floor(m/1440)+" j"}
 function active(p){document.querySelectorAll(".nav,.mobile-nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p))}
 function updateIdentity(){const n=profile?.full_name||profile?.username||session?.user.email.split("@")[0]||"Membre",i=initials(n);["topAvatar","sideAvatar"].forEach(id=>{const x=document.getElementById(id);if(x)x.textContent=i});const a=document.getElementById("sideName"),b=document.getElementById("sideCity");if(a)a.textContent=n;if(b)b.textContent=(profile?.city||"Goma")+" · membre"}
-async function loadProfile(){\n if(!session)return null;\n const r=await db.from("profiles").select("*").eq("id",session.user.id).maybeSingle();\n if(r.error){console.error("loadProfile",r.error);profile=null;return null}\n if(!r.data){\n  const p={id:session.user.id,full_name:session.user.user_metadata?.full_name||"",city:"Goma",bio:""};\n  const x=await db.from("profiles").insert(p).select("*").single();\n  if(x.error){console.error("createProfile",x.error);profile=null;return null}\n  profile=x.data\n }else profile=r.data;\n updateIdentity();\n return profile\n}
+async function loadProfile(){
+ if(!session)return null;
+ const r=await db.from("profiles").select("*").eq("id",session.user.id).maybeSingle();
+ if(r.error){console.error("loadProfile",r.error);profile=null;return null}
+ if(!r.data){
+  const p={id:session.user.id,full_name:session.user.user_metadata?.full_name||"",city:"Goma",bio:""};
+  const x=await db.from("profiles").insert(p).select("*").single();
+  if(x.error){console.error("createProfile",x.error);profile=null;return null}
+  profile=x.data
+ }else profile=r.data;
+ updateIdentity();
+ return profile
+}
 function showApp(show=true){const shell=document.querySelector("#appShell"),auth=document.querySelector("#authRoot");if(shell)shell.hidden=!show;if(auth)auth.hidden=show}
-function authMessage(r){const m=(r?.message||"").toLowerCase();if(m.includes("invalid login credentials"))return "E-mail ou mot de passe incorrect.";if(m.includes("user already registered"))return "Cet e-mail possède déjà un compte. Connecte-toi.";if(m.includes("email not confirmed"))return "Confirme d’abord ton adresse e-mail.";if(m.includes("password"))return "Le mot de passe doit contenir au moins 6 caractères.";return r?.message||"Une erreur est survenue."}\nfunction authModal(){
+function authMessage(r){const m=(r?.message||"").toLowerCase();if(m.includes("invalid login credentials"))return "E-mail ou mot de passe incorrect.";if(m.includes("user already registered"))return "Cet e-mail possède déjà un compte. Connecte-toi.";if(m.includes("email not confirmed"))return "Confirme d’abord ton adresse e-mail.";if(m.includes("password"))return "Le mot de passe doit contenir au moins 6 caractères.";return r?.message||"Une erreur est survenue."}
+function authModal(){
  showApp(false);
  const root=document.querySelector("#authRoot");
  root.innerHTML='<div class="auth-screen"><div class="auth-glow"></div><div class="auth-panel"><div class="auth-brand"><span>W</span><div><b>WHADALZON</b><small>La ville numérique qui nous connecte.</small></div></div><span class="kicker">ESPACE MEMBRE</span><h2>Bienvenue</h2><p>Connecte-toi pour accéder à toute l’application WHADALZON.</p><div class="auth-tabs"><button class="auth-tab active" data-auth="login">Connexion</button><button class="auth-tab" data-auth="signup">Créer un compte</button></div><div id="authForm"></div></div></div>';
  root.hidden=false;
  let mode="login";
  const render=()=>{document.querySelectorAll(".auth-tab").forEach(x=>x.classList.toggle("active",x.dataset.auth===mode));document.querySelector("#authForm").innerHTML=(mode==="signup"?'<input class="field" id="authName" placeholder="Nom complet">':"")+'<input class="field" id="authEmail" type="email" placeholder="Adresse e-mail"><input class="field" id="authPassword" type="password" placeholder="Mot de passe (6 caractères minimum)"><button class="submit" id="authSubmit">'+(mode==="login"?"Se connecter":"Créer mon compte")+"</button>";
- document.querySelector("#authSubmit").onclick=async()=>{const email=document.querySelector("#authEmail").value.trim(),password=document.querySelector("#authPassword").value,name=document.querySelector("#authName")?.value.trim()||"";if(!email||password.length<6){toastMsg("E-mail et mot de passe : 6 caractères minimum.");return}const redirect=window.location.origin+window.location.pathname;const r=mode==="login"?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:redirect}});if(r.error){toastMsg(authMessage(r.error));return}\n if(mode==="signup"&&!r.data.session){toastMsg("Compte créé. Vérifie ton e-mail de confirmation, puis connecte-toi.");return}\n session=r.data.session;await loadProfile();showApp(true);home()}};
+ document.querySelector("#authSubmit").onclick=async()=>{const email=document.querySelector("#authEmail").value.trim(),password=document.querySelector("#authPassword").value,name=document.querySelector("#authName")?.value.trim()||"";if(!email||password.length<6){toastMsg("E-mail et mot de passe : 6 caractères minimum.");return}const redirect=window.location.origin+window.location.pathname;const r=mode==="login"?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:redirect}});if(r.error){toastMsg(authMessage(r.error));return}
+ if(mode==="signup"&&!r.data.session){toastMsg("Compte créé. Vérifie ton e-mail de confirmation, puis connecte-toi.");return}
+ session=r.data.session;await loadProfile();showApp(true);home()}};
  document.querySelectorAll(".auth-tab").forEach(x=>x.onclick=()=>{mode=x.dataset.auth;render()});render();
 }
 function requireAuth(){if(!session){authModal();return false}return true}
@@ -69,10 +84,63 @@ async function profilePage(){
  document.querySelector("#logout").onclick=()=>db.auth.signOut();
 }
 async function notifications(){if(!requireAuth())return;active("notifications");const r=await db.from("notifications").select("id,type,is_read,created_at,profiles(full_name,username)").eq("user_id",session.user.id).order("created_at",{ascending:false}).limit(50);app.innerHTML='<section class="page"><div class="page-head card"><span class="kicker">NOTIFICATIONS</span><h1>Activité</h1><p>'+((r.data||[]).length)+' notification(s).</p></div><div class="card list-box">'+((r.data||[]).map(n=>'<div class="list-row"><i class="fa-regular fa-bell"></i><div><strong>'+esc(n.profiles?.full_name||"WHADALZON")+'</strong><small>'+esc(n.type)+" · "+ago(n.created_at)+'</small></div></div>').join("")||"<p>Aucune notification.</p>")+'</div></section>'}
-async function startChat(id){if(!requireAuth()||id===session.user.id)return;const mine=await db.from("conversation_members").select("conversation_id").eq("user_id",session.user.id);if(mine.error)return toastMsg(mine.error.message);for(const row of (mine.data||[])){const other=await db.from("conversation_members").select("user_id").eq("conversation_id",row.conversation_id).eq("user_id",id).maybeSingle();if(other.data)return chat(row.conversation_id)}const c=await db.from("conversations").insert({}).select("id").single();if(c.error)return toastMsg(c.error.message);const m=await db.from("conversation_members").insert([{conversation_id:c.data.id,user_id:session.user.id},{conversation_id:c.data.id,user_id:id}]);if(m.error)return toastMsg(m.error.message);chat(c.data.id)}
-async function chat(id){const access=await db.from("conversation_members").select("user_id").eq("conversation_id",id).eq("user_id",session.user.id).maybeSingle();if(!access.data)return toastMsg("Conversation inaccessible.");const r=await db.from("messages").select("id,content,created_at,sender_id,profiles(full_name,username)").eq("conversation_id",id).order("created_at",{ascending:true});modalContent.innerHTML='<span class="kicker">MESSAGE</span><h2>Conversation</h2><div class="chat-box">'+((r.data||[]).map(m=>'<div class="bubble '+(m.sender_id===session.user.id?"mine":"")+'"><b>'+esc(m.profiles?.full_name||m.profiles?.username||"Membre")+'</b><p>'+esc(m.content)+'</p><small>'+ago(m.created_at)+'</small></div>').join("")||"<p>Commence la conversation.</p>")+'</div><textarea class="field" id="msgText" rows="2" placeholder="Écrire un message…"></textarea><button class="submit" id="sendMsg">Envoyer</button>';modal.classList.add("open");if(window.chatChannel)db.removeChannel(window.chatChannel);window.chatChannel=db.channel("chat-"+id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"conversation_id=eq."+id},()=>chat(id)).subscribe();document.querySelector("#sendMsg").onclick=async()=>{const content=document.querySelector("#msgText").value.trim();if(!content)return;const x=await db.from("messages").insert({conversation_id:id,sender_id:session.user.id,content});if(x.error)return toastMsg(x.error.message);toastMsg("Message envoyé.");chat(id)}}
-async function messages(){if(!requireAuth())return;active("messages");const r=await db.from("conversation_members").select("conversation_id").eq("user_id",session.user.id);const ids=(r.data||[]).map(x=>x.conversation_id);if(!ids.length){app.innerHTML='<section class="page"><div class="page-head card"><span class="kicker">MESSAGES</span><h1>Ta messagerie</h1><p>Aucune conversation pour le moment.</p></div><div class="tile card">Va dans <b>Découvrir</b> pour écrire à un membre.</div></section>';return}const o=await db.from("conversation_members").select("conversation_id,user_id,profiles(full_name,username,city)").in("conversation_id",ids).neq("user_id",session.user.id);const map={};(o.data||[]).forEach(x=>map[x.conversation_id]=x.profiles);app.innerHTML='<section class="page"><div class="page-head card"><span class="kicker">MESSAGES</span><h1>Ta messagerie</h1></div><div class="card list-box">'+Object.keys(map).map(id=>'<button class="conversation-row" data-action="open-chat" data-conversation="'+id+'"><span class="avatar">'+initials(map[id]?.full_name||map[id]?.username||"M")+'</span><div><strong>'+esc(map[id]?.full_name||map[id]?.username||"Conversation")+'</strong><small>'+esc(map[id]?.city||"Goma")+'</small></div><i class="fa-solid fa-chevron-right"></i></button>').join("")+'</div></section>'}
-
+async function startChat(id){
+  if(!requireAuth()||id===session.user.id)return;
+  const r=await db.rpc("create_direct_conversation",{target_user:id});
+  if(r.error){console.error("create_direct_conversation",r.error);return toastMsg("Impossible de démarrer la conversation. Vérifie la migration Supabase.")}
+  await messages(r.data);
+}
+async function chat(id){return messages(id)}
+async function messages(selectedId=""){
+  if(!requireAuth())return;
+  active("messages");
+  const mine=await db.from("conversation_members").select("conversation_id").eq("user_id",session.user.id);
+  if(mine.error){console.error(mine.error);return toastMsg("Impossible de charger les conversations. Vérifie les règles Supabase.")}
+  const ids=[...new Set((mine.data||[]).map(x=>x.conversation_id))];
+  let rows=[];
+  if(ids.length){
+    const [members,last]=await Promise.all([
+      db.from("conversation_members").select("conversation_id,user_id,profiles(id,full_name,username,city,avatar_url)").in("conversation_id",ids).neq("user_id",session.user.id),
+      db.from("messages").select("conversation_id,content,created_at,sender_id").in("conversation_id",ids).order("created_at",{ascending:false}).limit(100)
+    ]);
+    if(members.error||last.error){console.error(members.error||last.error);return toastMsg("Erreur lors du chargement des discussions.")}
+    const people={};(members.data||[]).forEach(x=>{if(!people[x.conversation_id])people[x.conversation_id]=x.profiles||{}});
+    const latest={};(last.data||[]).forEach(m=>{if(!latest[m.conversation_id])latest[m.conversation_id]=m});
+    rows=ids.map(id=>({id,person:people[id]||{},last:latest[id]||null})).sort((a,b)=>new Date(b.last?.created_at||0)-new Date(a.last?.created_at||0));
+  }
+  app.innerHTML='<section class="messenger-page"><header class="messenger-heading"><div><span class="kicker">WHADALZON · PRIVÉ</span><h1>Messages</h1><p>Des conversations simples, en temps réel.</p></div><button class="primary" data-page="discover"><i class="fa-solid fa-plus"></i> Nouvelle discussion</button></header><div class="messenger-layout card"><aside class="messenger-list"><div class="messenger-list-title"><strong>Discussions</strong><span>'+rows.length+'</span></div><div class="messenger-rows">'+(rows.map(x=>'<button class="messenger-row '+(x.id===selectedId?'selected':'')+'" data-action="open-chat" data-conversation="'+x.id+'"><span class="avatar">'+initials(x.person.full_name||x.person.username||"M")+'</span><span class="messenger-row-copy"><strong>'+esc(x.person.full_name||x.person.username||"Membre")+'</strong><small>'+esc(x.last?.content||(x.person.city||"WHADALZON"))+'</small></span><span class="messenger-row-meta">'+(x.last?'<small>'+ago(x.last.created_at)+'</small>':"")+'</span></button>').join("")||'<div class="messenger-empty-list"><i class="fa-regular fa-comments"></i><p>Aucune discussion pour le moment.</p><small>Choisis un membre pour envoyer ton premier message.</small></div>')+'</div></aside><section class="messenger-chat" id="chatPanel"><div class="chat-welcome"><span class="chat-welcome-icon"><i class="fa-regular fa-paper-plane"></i></span><h2>Ta messagerie</h2><p>Sélectionne une discussion ou commence à écrire à un membre.</p><button class="primary" data-page="discover">Trouver un membre</button></div></section></div></section>';
+  if(selectedId)await renderChat(selectedId,true);
+}
+async function renderChat(id,subscribe=true){
+  if(!session)return;
+  const access=await db.from("conversation_members").select("conversation_id").eq("conversation_id",id).eq("user_id",session.user.id).maybeSingle();
+  if(access.error||!access.data){toastMsg("Conversation inaccessible.");return}
+  const [other,messagesResult]=await Promise.all([
+    db.from("conversation_members").select("user_id,profiles(full_name,username,city,avatar_url)").eq("conversation_id",id).neq("user_id",session.user.id).limit(1).maybeSingle(),
+    db.from("messages").select("id,content,created_at,sender_id,profiles(full_name,username)").eq("conversation_id",id).order("created_at",{ascending:true}).limit(500)
+  ]);
+  if(messagesResult.error){console.error(messagesResult.error);return toastMsg("Impossible de lire les messages.")}
+  const person=other.data?.profiles||{},name=person.full_name||person.username||"Conversation";
+  const panel=document.querySelector("#chatPanel");if(!panel)return;
+  panel.innerHTML='<header class="chat-header"><span class="avatar">'+initials(name)+'</span><div><strong>'+esc(name)+'</strong><small><i class="fa-solid fa-lock"></i> Conversation privée</small></div><button class="chat-back" data-page="messages" aria-label="Retour aux discussions"><i class="fa-solid fa-arrow-left"></i></button></header><div class="chat-messages" id="chatMessages">'+((messagesResult.data||[]).map(m=>'<article class="message-bubble '+(m.sender_id===session.user.id?'mine':'')+'"><p>'+esc(m.content)+'</p><time>'+new Date(m.created_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})+'</time></article>').join("")||'<div class="chat-first-message">Dis bonjour 👋</div>')+'</div><form class="chat-composer" id="chatComposer"><textarea id="msgText" rows="1" maxlength="5000" placeholder="Écrire un message…" aria-label="Écrire un message"></textarea><button type="submit" aria-label="Envoyer le message"><i class="fa-solid fa-paper-plane"></i></button></form>';
+  const box=document.querySelector("#chatMessages");if(box)box.scrollTop=box.scrollHeight;
+  if(subscribe){
+    if(window.chatChannel)await db.removeChannel(window.chatChannel);
+    window.chatChannel=db.channel("private-chat-"+id).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"conversation_id=eq."+id},()=>renderChat(id,false)).subscribe();
+  }
+  document.querySelector("#chatComposer").onsubmit=async e=>{
+    e.preventDefault();
+    const field=document.querySelector("#msgText"),content=field.value.trim();
+    if(!content)return;
+    field.disabled=true;
+    const sent=await db.from("messages").insert({conversation_id:id,sender_id:session.user.id,content});
+    if(sent.error){field.disabled=false;console.error(sent.error);return toastMsg("Message non envoyé. Réessaie.")}
+    await messages(id);
+  };
+  document.querySelector("#msgText").addEventListener("keydown",e=>{
+    if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();document.querySelector("#chatComposer")?.requestSubmit()}
+  });
+}
 async function spaces(){
   if(!requireAuth())return;
   active("spaces");
