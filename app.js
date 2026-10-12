@@ -19,16 +19,31 @@ function esc(s=""){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt
 function ago(d){const m=Math.max(1,Math.floor((Date.now()-new Date(d).getTime())/60000));return m<60?m+" min":m<1440?Math.floor(m/60)+" h":Math.floor(m/1440)+" j"}
 function active(p){document.querySelectorAll(".nav,.mobile-nav button").forEach(x=>x.classList.toggle("active",x.dataset.page===p))}
 function updateIdentity(){const n=profile?.full_name||profile?.username||session?.user.email.split("@")[0]||"Membre",i=initials(n);["topAvatar","sideAvatar"].forEach(id=>{const x=document.getElementById(id);if(x)x.textContent=i});const a=document.getElementById("sideName"),b=document.getElementById("sideCity");if(a)a.textContent=n;if(b)b.textContent=(profile?.city||"Goma")+" · membre"}
-async function loadProfile(){\n if(!session)return null;\n const r=await db.from("profiles").select("*").eq("id",session.user.id).maybeSingle();\n if(r.error){console.error("loadProfile",r.error);profile=null;return null}\n if(!r.data){\n  const p={id:session.user.id,full_name:session.user.user_metadata?.full_name||"",city:"Goma",bio:""};\n  const x=await db.from("profiles").insert(p).select("*").single();\n  if(x.error){console.error("createProfile",x.error);profile=null;return null}\n  profile=x.data\n }else profile=r.data;\n updateIdentity();\n return profile\n}
+async function loadProfile(){
+ if(!session)return null;
+ const r=await db.from("profiles").select("*").eq("id",session.user.id).maybeSingle();
+ if(r.error){console.error("loadProfile",r.error);profile=null;return null}
+ if(!r.data){
+  const p={id:session.user.id,full_name:session.user.user_metadata?.full_name||"",city:"Goma",bio:""};
+  const x=await db.from("profiles").insert(p).select("*").single();
+  if(x.error){console.error("createProfile",x.error);profile=null;return null}
+  profile=x.data
+ }else profile=r.data;
+ updateIdentity();
+ return profile
+}
 function showApp(show=true){const shell=document.querySelector("#appShell"),auth=document.querySelector("#authRoot");if(shell)shell.hidden=!show;if(auth)auth.hidden=show}
-function authMessage(r){const m=(r?.message||"").toLowerCase();if(m.includes("invalid login credentials"))return "E-mail ou mot de passe incorrect.";if(m.includes("user already registered"))return "Cet e-mail possède déjà un compte. Connecte-toi.";if(m.includes("email not confirmed"))return "Confirme d’abord ton adresse e-mail.";if(m.includes("password"))return "Le mot de passe doit contenir au moins 6 caractères.";return r?.message||"Une erreur est survenue."}\nfunction authModal(){
+function authMessage(r){const m=(r?.message||"").toLowerCase();if(m.includes("invalid login credentials"))return "E-mail ou mot de passe incorrect.";if(m.includes("user already registered"))return "Cet e-mail possède déjà un compte. Connecte-toi.";if(m.includes("email not confirmed"))return "Confirme d’abord ton adresse e-mail.";if(m.includes("password"))return "Le mot de passe doit contenir au moins 6 caractères.";return r?.message||"Une erreur est survenue."}
+function authModal(){
  showApp(false);
  const root=document.querySelector("#authRoot");
  root.innerHTML='<div class="auth-screen"><div class="auth-glow"></div><div class="auth-panel"><div class="auth-brand"><span>W</span><div><b>WHADALZON</b><small>La ville numérique qui nous connecte.</small></div></div><span class="kicker">ESPACE MEMBRE</span><h2>Bienvenue</h2><p>Connecte-toi pour accéder à toute l’application WHADALZON.</p><div class="auth-tabs"><button class="auth-tab active" data-auth="login">Connexion</button><button class="auth-tab" data-auth="signup">Créer un compte</button></div><div id="authForm"></div></div></div>';
  root.hidden=false;
  let mode="login";
  const render=()=>{document.querySelectorAll(".auth-tab").forEach(x=>x.classList.toggle("active",x.dataset.auth===mode));document.querySelector("#authForm").innerHTML=(mode==="signup"?'<input class="field" id="authName" placeholder="Nom complet">':"")+'<input class="field" id="authEmail" type="email" placeholder="Adresse e-mail"><input class="field" id="authPassword" type="password" placeholder="Mot de passe (6 caractères minimum)"><button class="submit" id="authSubmit">'+(mode==="login"?"Se connecter":"Créer mon compte")+"</button>";
- document.querySelector("#authSubmit").onclick=async()=>{const email=document.querySelector("#authEmail").value.trim(),password=document.querySelector("#authPassword").value,name=document.querySelector("#authName")?.value.trim()||"";if(!email||password.length<6){toastMsg("E-mail et mot de passe : 6 caractères minimum.");return}const redirect=window.location.origin+window.location.pathname;const r=mode==="login"?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:redirect}});if(r.error){toastMsg(authMessage(r.error));return}\n if(mode==="signup"&&!r.data.session){toastMsg("Compte créé. Vérifie ton e-mail de confirmation, puis connecte-toi.");return}\n session=r.data.session;await loadProfile();showApp(true);home()}};
+ document.querySelector("#authSubmit").onclick=async()=>{const email=document.querySelector("#authEmail").value.trim(),password=document.querySelector("#authPassword").value,name=document.querySelector("#authName")?.value.trim()||"";if(!email||password.length<6){toastMsg("E-mail et mot de passe : 6 caractères minimum.");return}const redirect=window.location.origin+window.location.pathname;const r=mode==="login"?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:redirect}});if(r.error){toastMsg(authMessage(r.error));return}
+ if(mode==="signup"&&!r.data.session){toastMsg("Compte créé. Vérifie ton e-mail de confirmation, puis connecte-toi.");return}
+ session=r.data.session;await loadProfile();showApp(true);home()}};
  document.querySelectorAll(".auth-tab").forEach(x=>x.onclick=()=>{mode=x.dataset.auth;render()});render();
 }
 function requireAuth(){if(!session){authModal();return false}return true}
