@@ -45,13 +45,29 @@ begin
   conversation_key := least(current_user_id::text, target_user::text)
     || ':' || greatest(current_user_id::text, target_user::text);
 
-  insert into public.conversations(direct_key)
-    values (conversation_key)
-    on conflict (direct_key) where direct_key is not null do nothing;
-
+  -- Reuse an existing one-to-one conversation where possible.
   select c.id into new_conversation_id
     from public.conversations c
-    where c.direct_key = conversation_key;
+    where c.direct_key = conversation_key
+       or (
+         exists (select 1 from public.conversation_members cm
+                 where cm.conversation_id = c.id and cm.user_id = current_user_id)
+         and exists (select 1 from public.conversation_members cm
+                     where cm.conversation_id = c.id and cm.user_id = target_user)
+         and (select count(*) from public.conversation_members cm
+              where cm.conversation_id = c.id) = 2
+       )
+    order by (c.direct_key = conversation_key) desc nulls last
+    limit 1;
+
+  if new_conversation_id is null then
+    insert into public.conversations(direct_key)
+      values (conversation_key)
+      on conflict (direct_key) where direct_key is not null do nothing;
+    select c.id into new_conversation_id
+      from public.conversations c
+      where c.direct_key = conversation_key;
+  end if;
 
   insert into public.conversation_members(conversation_id, user_id)
     values (new_conversation_id, current_user_id), (new_conversation_id, target_user)
