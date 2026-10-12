@@ -42,9 +42,16 @@ function authModal(){
  let mode="login";
  const render=()=>{document.querySelectorAll(".auth-tab").forEach(x=>x.classList.toggle("active",x.dataset.auth===mode));document.querySelector("#authForm").innerHTML=(mode==="signup"?'<input class="field" id="authName" placeholder="Nom complet">':"")+'<input class="field" id="authEmail" type="email" placeholder="Adresse e-mail"><input class="field" id="authPassword" type="password" placeholder="Mot de passe (6 caractères minimum)"><button class="submit" id="authSubmit">'+(mode==="login"?"Se connecter":"Créer mon compte")+"</button>";
  document.querySelector("#authSubmit").onclick=async()=>{const email=document.querySelector("#authEmail").value.trim(),password=document.querySelector("#authPassword").value,name=document.querySelector("#authName")?.value.trim()||"";if(!email||password.length<6){toastMsg("E-mail et mot de passe : 6 caractères minimum.");return}const redirect=window.location.origin+window.location.pathname;const r=mode==="login"?await db.auth.signInWithPassword({email,password}):await db.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:redirect}});if(r.error){toastMsg(authMessage(r.error));return}
- if(mode==="signup"&&!r.data.session){toastMsg("Compte créé. Vérifie ton e-mail de confirmation, puis connecte-toi.");return}
+ if(mode==="signup"&&!r.data.session){showEmailConfirmation(email);return}
  session=r.data.session;await loadProfile();showApp(true);home()}};
  document.querySelectorAll(".auth-tab").forEach(x=>x.onclick=()=>{mode=x.dataset.auth;render()});render();
+}
+function showEmailConfirmation(email){
+ const root=document.querySelector("#authRoot");
+ root.hidden=false;
+ root.innerHTML='<div class="auth-screen"><div class="auth-glow"></div><section class="auth-panel auth-confirmation"><div class="auth-brand"><span>W</span><div><b>WHADALZON</b><small>La ville numérique qui nous connecte.</small></div></div><div class="confirmation-icon"><i class="fa-regular fa-envelope"></i></div><span class="kicker">UNE DERNIÈRE ÉTAPE</span><h2>Vérifie ta boîte mail</h2><p>Ton compte a bien été créé. Nous avons envoyé un lien de confirmation à :</p><strong class="confirmation-email">'+esc(email)+'</strong><p>Ouvre cet e-mail et clique sur le lien pour confirmer ton adresse et activer ton compte. Pense à vérifier le dossier spam ou courrier indésirable.</p><button class="submit" id="confirmationBack">J’ai confirmé, revenir à la connexion</button><button class="auth-resend" id="resendConfirmation">Renvoyer l’e-mail</button><small class="confirmation-note" id="confirmationStatus">Tu ne peux pas encore te connecter tant que ton adresse n’est pas confirmée.</small></section></div>';
+ document.querySelector("#confirmationBack").onclick=()=>{authModal();const field=document.querySelector("#authEmail");if(field)field.value=email};
+ document.querySelector("#resendConfirmation").onclick=async()=>{const btn=document.querySelector("#resendConfirmation"),status=document.querySelector("#confirmationStatus");btn.disabled=true;btn.textContent="Envoi en cours…";const redirect=window.location.origin+window.location.pathname;const r=await db.auth.resend({type:"signup",email,options:{emailRedirectTo:redirect}});btn.disabled=false;btn.textContent="Renvoyer l’e-mail";status.textContent=r.error?authMessage(r.error):"Un nouvel e-mail de confirmation vient d’être envoyé. Vérifie aussi tes courriers indésirables.";};
 }
 function requireAuth(){if(!session){authModal();return false}return true}
 
