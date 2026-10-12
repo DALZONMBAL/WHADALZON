@@ -95,6 +95,7 @@ async function profilePage(){
 async function notifications(){if(!requireAuth())return;active("notifications");const r=await db.from("notifications").select("id,type,is_read,created_at,profiles(full_name,username)").eq("user_id",session.user.id).order("created_at",{ascending:false}).limit(50);app.innerHTML='<section class="page"><div class="page-head card"><span class="kicker">NOTIFICATIONS</span><h1>Activité</h1><p>'+((r.data||[]).length)+' notification(s).</p></div><div class="card list-box">'+((r.data||[]).map(n=>'<div class="list-row"><i class="fa-regular fa-bell"></i><div><strong>'+esc(n.profiles?.full_name||"WHADALZON")+'</strong><small>'+esc(n.type)+" · "+ago(n.created_at)+'</small></div></div>').join("")||"<p>Aucune notification.</p>")+'</div></section>'}
 async function startChat(id){
   if(!requireAuth()||id===session.user.id)return;
+  modal.classList.remove("open");
   const r=await db.rpc("create_direct_conversation",{target_user:id});
   if(r.error){console.error("create_direct_conversation",r.error);return toastMsg("Impossible de démarrer la conversation. Vérifie la migration Supabase.")}
   await messages(r.data);
@@ -215,6 +216,16 @@ async function toggleSave(id){
 }
 
 function simple(p){active(p);const v=pages[p];if(p==="discover")return discover();if(p==="messages")return messages();if(p==="notifications")return notifications();if(p==="spaces")return spaces();if(p==="events")return events();if(p==="channels")return channels();if(p==="saved")return saved();app.innerHTML='<section class="page"><div class="page-head card"><span class="kicker">WHADALZON</span><h1>'+v[0]+'</h1><p>'+v[1]+'</p></div><div class="grid"><div class="tile card"><i class="fa-solid fa-users"></i><strong>Communautés</strong><small>Cette section est prête pour les prochaines données de la ville.</small></div><div class="tile card"><i class="fa-solid fa-bolt"></i><strong>Supabase connecté</strong><small>Les comptes, profils, publications et interactions sont réels.</small></div></div></section>'}
+async function newChat(){
+ if(!requireAuth())return;
+ modalContent.innerHTML='<span class="kicker">NOUVELLE DISCUSSION</span><h2>Écrire à un membre</h2><input class="field" id="memberSearch" type="search" placeholder="Rechercher un nom ou un nom d’utilisateur"><div id="memberResults" class="people-grid"><p>Chargement des membres…</p></div>';
+ modal.classList.add("open");
+ const r=await db.from("profiles").select("id,username,full_name,city,avatar_url").neq("id",session.user.id).order("full_name",{ascending:true}).limit(100);
+ if(r.error){document.querySelector("#memberResults").innerHTML='<p>Impossible de charger les membres.</p>';return}
+ const people=r.data||[];
+ const render=()=>{const q=document.querySelector("#memberSearch").value.trim().toLowerCase(),rows=people.filter(u=>(u.full_name||"").toLowerCase().includes(q)||(u.username||"").toLowerCase().includes(q));document.querySelector("#memberResults").innerHTML=rows.map(u=>'<article class="person card"><span class="avatar">'+(u.avatar_url?'<img src="'+esc(u.avatar_url)+'" alt="">':initials(u.full_name||u.username||"M"))+'</span><strong>'+esc(u.full_name||u.username||"Membre")+'</strong><small>'+esc(u.city||"Goma")+'</small><button data-action="message-user" data-user="'+u.id+'"><i class="fa-regular fa-comments"></i> Envoyer un message</button></article>').join("")||'<p>Aucun membre trouvé.</p>'};
+ document.querySelector("#memberSearch").addEventListener("input",render);render();
+}
 async function statuses(){
  if(!requireAuth())return;active("statuses");
  const r=await db.from("statuses").select("id,user_id,content,image_url,created_at,expires_at,profiles(full_name,username,avatar_url,city)").gt("expires_at",new Date().toISOString()).order("created_at",{ascending:false}).limit(100);
@@ -231,7 +242,7 @@ async function createStatus(){
  const r=await db.from("statuses").insert({user_id:session.user.id,content,image_url});if(r.error){console.error(r.error);btn.disabled=false;btn.textContent="Publier mon statut";return toastMsg("Statut non publié. Vérifie la migration Supabase.")}modal.classList.remove("open");toastMsg("Statut publié.");statuses()};
 }
 async function deleteStatus(id){if(!requireAuth()||!confirm("Supprimer ce statut ?"))return;const r=await db.from("statuses").delete().eq("id",id).eq("user_id",session.user.id);if(r.error)return toastMsg("Impossible de supprimer le statut.");toastMsg("Statut supprimé.");statuses()}
-function go(p){if(p==="home"||p==="messages")messages();else if(p==="statuses")statuses();else if(p==="profile")profilePage();else messages()}
+function go(p){if(p==="home"||p==="messages")messages();else if(p==="statuses")statuses();else if(p==="profile")profilePage();else if(p==="discover")newChat();else messages()}
 
 document.addEventListener("click",async e=>{const b=e.target.closest("[data-page]");if(b){e.preventDefault();go(b.dataset.page);return}const a=e.target.closest("[data-action]");if(!a)return;const x=a.dataset.action;if(x==="like")likePost(a.dataset.post);else if(x==="comment")comments(a.dataset.post);else if(x==="view-profile")viewProfile(a.dataset.user);else if(x==="follow")followUser(a.dataset.user);else if(x==="message-user")startChat(a.dataset.user);else if(x==="open-chat")chat(a.dataset.conversation);else if(x==="new-status")createStatus();else if(x==="delete-status")deleteStatus(a.dataset.status);else if(x==="create-space")createSpace();else if(x==="join-space")joinSpace(a.dataset.space);else if(x==="create-event")createEvent();else if(x==="create-channel")createChannel();else if(x==="save-post")toggleSave(a.dataset.post);else if(x==="delete-post"&&confirm("Supprimer cette publication ?")){await db.from("posts").delete().eq("id",a.dataset.post).eq("user_id",session.user.id);home()}else if(x==="share"){try{await navigator.clipboard.writeText(location.href);toastMsg("Lien copié")}catch{toastMsg("Lien prêt à partager")}}});
 document.querySelector("#close").onclick=()=>modal.classList.remove("open");modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("open")});
