@@ -12,7 +12,7 @@ create index if not exists statuses_expiry_idx on public.statuses(expires_at des
 create index if not exists statuses_user_created_idx on public.statuses(user_id,created_at desc);
 alter table public.statuses enable row level security;
 drop policy if exists "active statuses are visible" on public.statuses;
-create policy "active statuses are visible" on public.statuses for select using (expires_at > now());
+create policy "active statuses are visible" on public.statuses for select using (auth.uid() is not null and expires_at > now());
 drop policy if exists "users create own statuses" on public.statuses;
 create policy "users create own statuses" on public.statuses for insert with check (auth.uid()=user_id and expires_at <= now()+interval '24 hours' and expires_at > now());
 drop policy if exists "users delete own statuses" on public.statuses;
